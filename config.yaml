@@ -1,0 +1,6 @@
+database:
+  username: root
+  password: 198876
+  host: localhost
+  port: 3306
+  database: sqli_demo

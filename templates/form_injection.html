@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>表单注入演示</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { color: #333; text-align: center; }
+        form { margin-top: 20px; border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
+        label { display: block; margin-bottom: 10px; }
+        input[type="text"] { width: 100%; padding: 8px; margin-bottom: 15px; box-sizing: border-box; }
+        input[type="submit"] { background-color: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; }
+        input[type="submit"]:hover { background-color: #2980b9; }
+        .code-block { background-color: #f5f5f5; padding: 10px; border-radius: 4px; margin-top: 20px; }
+        .result { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .nav-bar { background-color: #2c3e50; color: white; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+        .nav-bar a { color: white; margin-right: 20px; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/">首页</a>
+        <a href="/form_injection">表单注入</a>
+    </div>
+
+    <h1>表单注入演示</h1>
+    <p>在此演示中，您可以测试如何通过表单输入进行SQL注入攻击。</p>
+
+    <form action="/form_injection_submit" method="post">
+        <label for="username">用户名:</label>
+        <input type="text" id="username" name="username" placeholder="输入用户名...">
+        <input type="submit" value="提交">
+    </form>
+
+    <div class="code-block">
+        <h3>注入示例:</h3>
+        <p>1. 简单查询: <code>' OR '1'='1</code></p>
+        <p>2. 联合查询: <code>' UNION SELECT 1,username,password,email FROM users--</code></p>
+        <p>3. 报错注入: <code>' AND extractvalue(1,concat(0x5c,(SELECT user())))--</code></p>
+    </div>
+
+    <div class="result">
+        <h3>结果将显示在这里</h3>
+    </div>
+
+    <script>
+        // 简单的AJAX提交处理
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const resultDiv = document.querySelector('.result');
+
+            fetch('/form_injection_submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `username=${encodeURIComponent(username)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultDiv.innerHTML = `<h3>查询结果:</h3><p><strong>查询语句:</strong> ${data.query}</p>`;
+                if (data.error) {
+                    resultDiv.innerHTML += `<p style="color: red;"><strong>错误:</strong> ${data.error}</p>`;
+                } else if (data.results) {
+                    resultDiv.innerHTML += `<p><strong>结果:</strong></p><pre>${JSON.stringify(data.results, null, 2)}</pre>`;
+                }
+            })
+            .catch(error => {
+                resultDiv.innerHTML = `<p style="color: red;">发生错误: ${error}</p>`;
+            });
+        });
+    </script>
+</body>
+</html>

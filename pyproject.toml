@@ -1,0 +1,38 @@
+[project]
+name = "sql-injection-demo"
+version = "0.1.0"
+description = "SQL注入演示平台，用于学习和理解各种SQL注入攻击方式及其防护方法"
+authors = [
+  { name="AutoTestClass", email="autotestclass@example.com" }
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+requires-python = ">=3.8"
+dependencies = [
+  "fastapi==0.103.1",
+  "uvicorn==0.23.2",
+  "sqlalchemy>=2.0.30",
+  "pymysql==1.1.0",
+  "python-multipart==0.0.6",
+  "jinja2==3.1.2",
+  "pyyaml==6.0.1",
+]
+
+[project.urls]
+homepage = "https://github.com/AutoTestClass/Learn-hacking-class"
+
+[tool.setuptools]
+packages = { find = { where = ["."], exclude = ["templates"] } }
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+addopts = "-v"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
