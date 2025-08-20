@@ -6,7 +6,8 @@ from sqlalchemy import text
 from database import get_db, engine
 import models
 import pymysql
-import uvicorn
+# import uvicorn
+from loguru import logger
 
 # 创建数据库表
 models.Base.metadata.create_all(bind=engine)
@@ -54,22 +55,9 @@ def read_root(request: Request):
 def union_injection(product_id: str, db: Session = Depends(get_db)):
     # 不安全的查询方式 - 直接拼接用户输入
     query = f"SELECT id, name, price FROM products WHERE id = {product_id}"
+    logger.debug(f"exe SQL: {query}")
     try:
         result = db.execute(text(query))
-        # 将查询结果转换为字典列表
-        products = [dict(row) for row in result.mappings()]
-        return {"query": query, "results": products}
-    except Exception as e:
-        return {"error": str(e), "query": query}
-
-
-# 2. 联合查询注入演示 (安全)
-@app.get("/union_injection_safe/{product_id}")
-def union_injection_safe(product_id: str, db: Session = Depends(get_db)):
-    # 安全的查询方式 - 使用参数化查询
-    query = "SELECT id, name, price FROM products WHERE id = :id"
-    try:
-        result = db.execute(text(query), {"id": product_id})
         # 将查询结果转换为字典列表
         products = [dict(row) for row in result.mappings()]
         return {"query": query, "results": products}
@@ -81,13 +69,13 @@ def union_injection_safe(product_id: str, db: Session = Depends(get_db)):
 @app.get("/boolean_blind/{input}")
 def boolean_blind(input: str, db: Session = Depends(get_db)):
     # 不安全的查询方式
-    query = f"SELECT id FROM users WHERE username = 'admin' AND 1=1{input}"
+    query = f"SELECT username, email FROM users WHERE username = '{input}' "
+    logger.debug(f"exe SQL: {query}")
     try:
         result = db.execute(text(query))
-        if result.fetchone():
-            return {"result": "True", "query": query}
-        else:
-            return {"result": "False", "query": query}
+        # 将查询结果转换为字典列表
+        products = [dict(row) for row in result.mappings()]
+        return {"query": query, "results": products}
     except Exception as e:
         return {"error": str(e), "query": query}
 
@@ -97,6 +85,7 @@ def boolean_blind(input: str, db: Session = Depends(get_db)):
 def error_injection(input: str, db: Session = Depends(get_db)):
     # 不安全的查询方式
     query = f"SELECT * FROM products WHERE id = 1 {input}"
+    logger.debug(f"exe SQL: {query}")
     try:
         result = db.execute(text(query))
         # 将查询结果转换为字典列表
@@ -111,6 +100,7 @@ def error_injection(input: str, db: Session = Depends(get_db)):
 def time_blind(input: str, db: Session = Depends(get_db)):
     # 不安全的查询方式
     query = f"SELECT * FROM products WHERE id = 1 AND SLEEP({input})"
+    logger.debug(f"exe SQL: {query}")
     try:
         result = db.execute(text(query))
         # 将查询结果转换为字典列表
@@ -131,6 +121,7 @@ def form_injection_page(request: Request):
 def form_injection_submit(username: str = Form(...), db: Session = Depends(get_db)):
     # 不安全的查询方式
     query = f"SELECT * FROM users WHERE username = '{username}'"
+    logger.debug(f"exe SQL: {query}")
     try:
         result = db.execute(text(query))
         # 将查询结果转换为字典列表
@@ -148,6 +139,7 @@ def wide_byte_injection(input: str, db: Session = Depends(get_db)):
     escaped_input = input.replace("'", "\\'")
     # 宽字节注入会尝试用%df等字符吃掉反斜杠
     query = f"SELECT * FROM users WHERE username = '{escaped_input}'"
+    logger.debug(f"exe SQL: {query}")
     try:
         result = db.execute(text(query))
         # 将查询结果转换为字典列表
@@ -162,6 +154,7 @@ def wide_byte_injection(input: str, db: Session = Depends(get_db)):
 def stacked_queries(input: str, db: Session = Depends(get_db)):
     # 不安全的查询方式 - 允许执行多个查询
     query = f"SELECT * FROM products WHERE id = 1; {input}"
+    logger.debug(f"exe SQL: {query}")
     try:
         # 注意：SQLAlchemy默认不允许堆叠查询，这里只是模拟演示
         # 在实际环境中，这可能需要使用其他方法来执行
@@ -181,6 +174,5 @@ def stacked_queries(input: str, db: Session = Depends(get_db)):
     except Exception as e:
         return {"error": str(e), "query": query}
 
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+# if __name__ == "__main__":
+#     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

