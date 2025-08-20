@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Request, Form
+from fastapi import FastAPI, Depends, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -6,6 +6,7 @@ from sqlalchemy import text
 from database import get_db, engine
 import models
 import pymysql
+import uvicorn
 
 # 创建数据库表
 models.Base.metadata.create_all(bind=engine)
@@ -13,6 +14,7 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 templates = Jinja2Templates(directory="templates")
+
 
 # 初始化数据
 @app.on_event("startup")
@@ -27,7 +29,7 @@ def init_data():
             models.User(username="user2", password="password2", email="user2@example.com")
         ]
         db.add_all(test_users)
-        
+
     # 检查产品表是否有数据
     if db.query(models.Product).count() == 0:
         # 添加测试产品
@@ -37,13 +39,15 @@ def init_data():
             models.Product(name="平板电脑", price=2999, description="轻便平板电脑")
         ]
         db.add_all(test_products)
-        
+
     db.commit()
+
 
 # 首页
 @app.get("/", response_class=HTMLResponse)
 def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
 
 # 1. 联合查询注入演示 (不安全)
 @app.get("/union_injection/{product_id}")
@@ -58,9 +62,10 @@ def union_injection(product_id: str, db: Session = Depends(get_db)):
     except Exception as e:
         return {"error": str(e), "query": query}
 
+
 # 2. 联合查询注入演示 (安全)
 @app.get("/union_injection_safe/{product_id}")
-def union_injection_safe(product_id: int, db: Session = Depends(get_db)):
+def union_injection_safe(product_id: str, db: Session = Depends(get_db)):
     # 安全的查询方式 - 使用参数化查询
     query = "SELECT id, name, price FROM products WHERE id = :id"
     try:
@@ -70,6 +75,7 @@ def union_injection_safe(product_id: int, db: Session = Depends(get_db)):
         return {"query": query, "results": products}
     except Exception as e:
         return {"error": str(e), "query": query}
+
 
 # 3. 布尔盲注演示 (不安全)
 @app.get("/boolean_blind/{input}")
@@ -85,6 +91,7 @@ def boolean_blind(input: str, db: Session = Depends(get_db)):
     except Exception as e:
         return {"error": str(e), "query": query}
 
+
 # 4. 报错注入演示 (不安全)
 @app.get("/error_injection/{input}")
 def error_injection(input: str, db: Session = Depends(get_db)):
@@ -97,6 +104,7 @@ def error_injection(input: str, db: Session = Depends(get_db)):
         return {"query": query, "results": products}
     except Exception as e:
         return {"error": str(e), "query": query}
+
 
 # 5. 时间盲注演示 (不安全)
 @app.get("/time_blind/{input}")
@@ -111,10 +119,12 @@ def time_blind(input: str, db: Session = Depends(get_db)):
     except Exception as e:
         return {"error": str(e), "query": query}
 
+
 # 6. 表单注入演示页面
 @app.get("/form_injection", response_class=HTMLResponse)
 def form_injection_page(request: Request):
     return templates.TemplateResponse("form_injection.html", {"request": request})
+
 
 # 7. 表单注入处理 (不安全)
 @app.post("/form_injection_submit")
@@ -128,6 +138,7 @@ def form_injection_submit(username: str = Form(...), db: Session = Depends(get_d
         return {"query": query, "results": users}
     except Exception as e:
         return {"error": str(e), "query": query}
+
 
 # 8. 宽字节注入演示 (不安全)
 @app.get("/wide_byte_injection/{input}")
@@ -144,6 +155,7 @@ def wide_byte_injection(input: str, db: Session = Depends(get_db)):
         return {"query": query, "escaped_input": escaped_input, "results": users}
     except Exception as e:
         return {"error": str(e), "query": query, "escaped_input": escaped_input}
+
 
 # 9. 堆叠查询注入演示 (不安全)
 @app.get("/stacked_queries/{input}")
@@ -169,6 +181,6 @@ def stacked_queries(input: str, db: Session = Depends(get_db)):
     except Exception as e:
         return {"error": str(e), "query": query}
 
+
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)
