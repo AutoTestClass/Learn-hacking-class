@@ -36,7 +36,7 @@
         <div class="code-block">
             <p>1 UNION SELECT 1,username,password FROM users--</p>
         </div>
-        <a target="_blank" href="/union_injection/">联合查询注入</a>
+        <a target="_blank" href="/union_injection/1">联合查询注入</a>
     </div>
 
     <div class="demo-card">
@@ -50,35 +50,39 @@
         <div class="code-block">
             <p> admin' AND SUBSTRING(password,1,1)='a </p>
         </div>
-        <a target="_blank" href="/boolean_blind/">测试布尔盲注</a>
+        <a target="_blank" href="/boolean_blind/admin">测试布尔盲注</a>
     </div>
 
     <div class="demo-card">
         <h2>3. 报错注入</h2>
         <p>通过构造恶意查询，使数据库返回错误信息，从而获取敏感数据。</p>
-        <p>1. 1/0 除零错误（Division by zero）</p>
+        <p>1. 获取数据库名</p>
         <div class="code-block">
-            <p> AND (SELECT 1/0)</p>
+            <p> 1 AND (SELECT updatexml(1, concat(0x5c, (SELECT database())), 1))</p>
         </div>
-        <p>2.
-            extractvalue(xml_frag, xpath_expr):
-            MySQL 函数，用于从 XML 文档中提取值。</br>
-            concat(0x5c, (SELECT user()))
-            concat()：字符串拼接函数; </br>
-            0x5c：十六进制，表示字符 \
+        <p>2.获取登录地址与用户名。 </p>
+        <div class="code-block">
+            <p>1 AND extractvalue(1,concat(0x5c,(SELECT user())))</p>
+        </div>
+        <a target="_blank" href="/error_injection/?input=1">测试报错注入</a>
+        <p>
+            * updatexml(目标xml, xpath路径，新值)这个函数本来是用于修改 XML 数据的。</br>
+            * extractvalue(xml片段, xpath表达式): 用于从 XML 文档中提取值。</br>
+            * concat()：字符串拼接函数; </br>
+            * 0x5c：十六进制，表示字符 \
         </p>
-        <div class="code-block">
-            <p> AND extractvalue(1,concat(0x5c,(SELECT user())))</p>
-        </div>
-        <a target="_blank" href="/error_injection/">测试报错注入</a>
     </div>
 
     <div class="demo-card">
         <h2>4. 时间盲注</h2>
         <p>通过构造包含时间延迟函数的查询，根据响应时间判断信息。</p>
+        <p>1. 检查是否支持时间盲注</p>
         <div class="code-block">
-            <p>GET /time_blind/3</p>
-            <p>GET /time_blind/IF(SUBSTRING(password,1,1)='a',3,0)</p>
+            <p>1 AND IF(1=1, SLEEP(3), 0)</p>
+        </div>
+        <p>2. 通过时间盲注猜测密码</p>
+        <div class="code-block">
+            <p>1 AND IF(SUBSTRING((SELECT username FROM users LIMIT 1),1,1)='a', SLEEP(3), 0)</p>
         </div>
         <a target="_blank" href="/time_blind/3">测试时间盲注</a>
     </div>

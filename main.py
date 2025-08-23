@@ -81,10 +81,10 @@ def boolean_blind(input: str, db: Session = Depends(get_db)):
 
 
 # 4. 报错注入演示 (不安全)
-@app.get("/error_injection/{input}")
+@app.get("/error_injection/")
 def error_injection(input: str, db: Session = Depends(get_db)):
     # 不安全的查询方式
-    query = f"SELECT * FROM products WHERE id = 1 {input}"
+    query = f"SELECT * FROM products WHERE id = {input}"
     logger.debug(f"exe SQL: {query}")
     try:
         result = db.execute(text(query))
@@ -99,7 +99,7 @@ def error_injection(input: str, db: Session = Depends(get_db)):
 @app.get("/time_blind/{input}")
 def time_blind(input: str, db: Session = Depends(get_db)):
     # 不安全的查询方式
-    query = f"SELECT * FROM products WHERE id = 1 AND SLEEP({input})"
+    query = f"SELECT * FROM products WHERE id = {input}"
     logger.debug(f"exe SQL: {query}")
     try:
         result = db.execute(text(query))

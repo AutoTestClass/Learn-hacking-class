@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String
 from database import Base
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -8,6 +9,7 @@ class User(Base):
     username = Column(String(50), unique=True, index=True)
     password = Column(String(100))
     email = Column(String(100), unique=True, index=True)
+
 
 class Product(Base):
     __tablename__ = "products"
